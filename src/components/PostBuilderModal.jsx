@@ -1,11 +1,35 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const PostBuilderModal = ({ onClose }) => {
   const [showPreview, setShowPreview] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
-  const [position, setPosition] = useState({ x: 100, y: 50 })
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const modalRef = useRef(null)
+  
+  const modalWidth = showPreview ? 1120 : 720
+  const modalHeight = 550
+  
+  // Center the modal on initial load
+  const [position, setPosition] = useState(() => ({
+    x: (window.innerWidth - modalWidth) / 2,
+    y: (window.innerHeight - modalHeight) / 2
+  }))
+
+  // Update position when preview toggle changes modal width
+  useEffect(() => {
+    setPosition(prev => ({
+      ...prev,
+      x: (window.innerWidth - modalWidth) / 2
+    }))
+  }, [modalWidth])
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [])
 
   const handleMouseDown = (e) => {
     if (e.target.closest('.drag-handle')) {
@@ -31,17 +55,18 @@ const PostBuilderModal = ({ onClose }) => {
     setIsDragging(false)
   }
 
-  // Attach mouse events to document when dragging
-  if (isDragging) {
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  } else {
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-
-  const modalWidth = showPreview ? 1120 : 720
-  const modalHeight = 550
+  // Properly manage drag event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, dragOffset])
 
   return (
     <>
@@ -92,9 +117,13 @@ const PostBuilderModal = ({ onClose }) => {
         }}>
           {/* Drag Handle */}
           <div className="drag-handle" style={{
-            cursor: 'grab',
-            display: 'flex',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
             gap: '2px',
+            width: '12px',
+            height: '12px',
             marginRight: '12px'
           }}>
             {[...Array(6)].map((_, i) => (
@@ -207,13 +236,6 @@ const PostBuilderModal = ({ onClose }) => {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <label style={{ 
-                  fontWeight: '500', 
-                  marginBottom: '8px',
-                  fontSize: '14px' 
-                }}>
-                  Caption
-                </label>
                 <textarea 
                   placeholder="Write your caption..."
                   style={{
@@ -223,7 +245,8 @@ const PostBuilderModal = ({ onClose }) => {
                     borderRadius: '8px',
                     resize: 'none',
                     fontFamily: 'inherit',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    minHeight: '120px'
                   }}
                 />
               </div>
@@ -332,14 +355,6 @@ const PostBuilderModal = ({ onClose }) => {
               padding: '20px',
               backgroundColor: '#f8f9fa'
             }}>
-              <h3 style={{
-                margin: '0 0 16px 0',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                Post Preview
-              </h3>
-              
               <div style={{
                 color: '#6c757d',
                 fontSize: '14px',
