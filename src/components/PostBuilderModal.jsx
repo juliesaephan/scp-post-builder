@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ChannelBadge from './ChannelBadge'
 import ChannelMenu from './ChannelMenu'
+import PreviewCarousel from './PreviewCarousel'
 
 const PostBuilderModal = ({ onClose }) => {
   const [showPreview, setShowPreview] = useState(true)
@@ -8,6 +9,8 @@ const PostBuilderModal = ({ onClose }) => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [selectedChannels, setSelectedChannels] = useState([])
   const [showChannelMenu, setShowChannelMenu] = useState(false)
+  const [caption, setCaption] = useState('')
+  const [media, setMedia] = useState([])
   const modalRef = useRef(null)
   const addButtonRef = useRef(null)
   
@@ -111,6 +114,17 @@ const PostBuilderModal = ({ onClose }) => {
   const handleChannelEdit = (channelId) => {
     // TODO: Implement individual channel editing
     console.log('Edit channel:', channelId)
+  }
+
+  const handleMediaUpload = () => {
+    // Simulate media upload with dummy data
+    setMedia([
+      { id: 1, type: 'image', url: 'placeholder-image.jpg', name: 'Sample Image' }
+    ])
+  }
+
+  const handleCaptionChange = (e) => {
+    setCaption(e.target.value)
   }
 
   return (
@@ -259,19 +273,26 @@ const PostBuilderModal = ({ onClose }) => {
               marginBottom: '20px'
             }}>
               {/* Media Uploader */}
-              <div style={{
-                flex: 1,
-                border: '2px dashed #dee2e6',
-                borderRadius: '8px',
-                padding: '40px 20px',
-                textAlign: 'center',
-                backgroundColor: '#f8f9fa',
-                cursor: 'pointer'
-              }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📁</div>
-                <div style={{ fontWeight: '500', marginBottom: '4px' }}>Upload Media</div>
+              <div 
+                onClick={handleMediaUpload}
+                style={{
+                  flex: 1,
+                  border: '2px dashed #dee2e6',
+                  borderRadius: '8px',
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                  backgroundColor: '#f8f9fa',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+                  {media.length > 0 ? '📷' : '📁'}
+                </div>
+                <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                  {media.length > 0 ? `${media.length} file(s) selected` : 'Upload Media'}
+                </div>
                 <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                  Drag & drop or click to upload
+                  {media.length > 0 ? 'Click to change files' : 'Drag & drop or click to upload'}
                 </div>
               </div>
 
@@ -283,6 +304,8 @@ const PostBuilderModal = ({ onClose }) => {
               }}>
                 <textarea 
                   placeholder="Write your caption..."
+                  value={caption}
+                  onChange={handleCaptionChange}
                   style={{
                     flex: 1,
                     padding: '12px',
@@ -470,21 +493,17 @@ const PostBuilderModal = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Right Panel - Post Preview */}
+          {/* Right Panel - Preview Carousel */}
           {showPreview && (
             <div style={{
               width: '40%',
-              padding: '20px',
               backgroundColor: '#f8f9fa'
             }}>
-              <div style={{
-                color: '#6c757d',
-                fontSize: '14px',
-                textAlign: 'center',
-                marginTop: '60px'
-              }}>
-                Select channels and add content to see preview
-              </div>
+              <PreviewCarousel
+                selectedChannels={selectedChannels}
+                caption={caption}
+                media={media}
+              />
             </div>
           )}
         </div>
