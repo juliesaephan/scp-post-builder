@@ -26,15 +26,23 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target) &&
-          submenuRef.current && !submenuRef.current.contains(event.target)) {
+      // Check if the click is outside the main menu
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(event.target)
+      
+      // Check if the click is outside the submenu (if it exists)
+      const clickedOutsideSubmenu = !submenuRef.current || !submenuRef.current.contains(event.target)
+      
+      // Also check if the click was on the trigger button to avoid closing when opening
+      const clickedOnButton = buttonRef?.current && buttonRef.current.contains(event.target)
+      
+      if (clickedOutsideMenu && clickedOutsideSubmenu && !clickedOnButton) {
         onClose()
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
+  }, [onClose, buttonRef])
 
   const isChannelSelected = (platformId) => {
     return selectedChannels.some(channel => channel.id === platformId)

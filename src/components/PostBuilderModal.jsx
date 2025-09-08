@@ -3,6 +3,7 @@ import ChannelBadge from './ChannelBadge'
 import ChannelMenu from './ChannelMenu'
 import PreviewCarousel from './PreviewCarousel'
 import CrossChannelEditor from './CrossChannelEditor'
+import { getRandomMediaItems } from '../data/mockMedia'
 
 const PostBuilderModal = ({ onClose }) => {
   const [showPreview, setShowPreview] = useState(true)
@@ -121,10 +122,9 @@ const PostBuilderModal = ({ onClose }) => {
   }
 
   const handleMediaUpload = () => {
-    // Simulate media upload with dummy data
-    setMedia([
-      { id: 1, type: 'image', url: 'placeholder-image.jpg', name: 'Sample Image' }
-    ])
+    // Simulate media upload with random mock media items
+    const randomMedia = getRandomMediaItems(Math.floor(Math.random() * 3) + 1) // 1-3 items
+    setMedia(randomMedia)
   }
 
   const handleCaptionChange = (e) => {
@@ -134,11 +134,20 @@ const PostBuilderModal = ({ onClose }) => {
   const handleCustomizeClick = () => {
     setCrossChannelMode(true)
     setActiveTab('media')
+    
+    // Initialize individual channel captions with current shared caption
+    const channelCaptions = {}
+    selectedChannels.forEach(channel => {
+      channelCaptions[channel.id] = caption
+    })
+    
     // Initialize temp changes with current state
     setTempChanges({
       caption: caption,
       media: media,
-      channels: selectedChannels
+      channels: selectedChannels,
+      channelCaptions: channelCaptions,
+      captionsLinked: true // Start with captions linked
     })
   }
 
@@ -149,9 +158,25 @@ const PostBuilderModal = ({ onClose }) => {
 
   const handleUpdateCrossChannel = () => {
     // Apply temp changes to actual state
-    if (tempChanges.caption !== undefined) setCaption(tempChanges.caption)
     if (tempChanges.media !== undefined) setMedia(tempChanges.media)
     if (tempChanges.channels !== undefined) setSelectedChannels(tempChanges.channels)
+    
+    // Handle captions - if they're linked, use any channel's caption as the master
+    // If they're separate, we keep the individual captions (for now using first channel's caption as master)
+    if (tempChanges.channelCaptions && Object.keys(tempChanges.channelCaptions).length > 0) {
+      if (tempChanges.captionsLinked) {
+        // Use any channel's caption since they're all the same
+        const firstChannelId = Object.keys(tempChanges.channelCaptions)[0]
+        setCaption(tempChanges.channelCaptions[firstChannelId] || '')
+      } else {
+        // For now, use the first channel's caption as the main caption
+        // In a full implementation, you might want to store individual captions separately
+        const firstChannelId = Object.keys(tempChanges.channelCaptions)[0]
+        setCaption(tempChanges.channelCaptions[firstChannelId] || '')
+      }
+    } else if (tempChanges.caption !== undefined) {
+      setCaption(tempChanges.caption)
+    }
     
     setCrossChannelMode(false)
     setTempChanges({})

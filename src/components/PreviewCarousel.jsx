@@ -225,10 +225,10 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
                 <div
                   onClick={() => handlePreviewClick(prevIndex)}
                   style={{
-                    width: '300px',
-                    height: '80%',
-                    opacity: 0.4,
-                    transform: 'scale(0.85)',
+                    width: '200px',
+                    height: '70%',
+                    opacity: 0.3,
+                    transform: 'scale(0.7)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     zIndex: 1,
@@ -247,11 +247,11 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
               ) : null
             })()}
 
-            {/* Active Preview */}
+            {/* Active Preview - Now truly 3x larger than sides (600px vs 200px) */}
             {previewData[activePreviewIndex] && (
               <div style={{
-                width: '400px',
-                height: '90%',
+                width: '600px',
+                height: '95%',
                 opacity: 1,
                 transform: 'scale(1)',
                 zIndex: 2,
@@ -282,10 +282,10 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
                 <div
                   onClick={() => handlePreviewClick(nextIndex)}
                   style={{
-                    width: '300px',
-                    height: '80%',
-                    opacity: 0.4,
-                    transform: 'scale(0.85)',
+                    width: '200px',
+                    height: '70%',
+                    opacity: 0.3,
+                    transform: 'scale(0.7)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     zIndex: 1,

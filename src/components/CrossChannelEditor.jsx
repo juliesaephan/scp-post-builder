@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getPlatformById } from '../data/platforms'
+import { getRandomMediaItems } from '../data/mockMedia'
 
 const CrossChannelEditor = ({ 
   selectedChannels, 
@@ -81,19 +82,36 @@ const CrossChannelEditor = ({
                   alignItems: 'center',
                   gap: '12px'
                 }}>
-                  <div style={{
-                    width: '80px',
-                    height: '80px',
-                    border: '2px dashed #dee2e6',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#f8f9fa',
-                    cursor: 'pointer',
-                    fontSize: '32px'
-                  }}>
-                    {tempChanges.media?.length > 0 ? '📷' : '+'}
+                  <div 
+                    onClick={() => {
+                      // Simulate media selection with random mock media items
+                      const randomMedia = getRandomMediaItems(Math.floor(Math.random() * 3) + 1)
+                      setTempChanges(prev => ({
+                        ...prev,
+                        media: randomMedia
+                      }))
+                    }}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      border: '2px dashed #dee2e6',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#f8f9fa',
+                      cursor: 'pointer',
+                      fontSize: '32px',
+                      backgroundImage: tempChanges.media?.length > 0 && tempChanges.media[0].thumbnail ? 
+                        `url(${tempChanges.media[0].thumbnail})` : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      color: tempChanges.media?.length > 0 && tempChanges.media[0].thumbnail ? 
+                        'transparent' : 'inherit'
+                    }}
+                  >
+                    {tempChanges.media?.length > 0 && !tempChanges.media[0].thumbnail ? '📷' : 
+                     tempChanges.media?.length === 0 ? '+' : ''}
                   </div>
                   
                   <div style={{ flex: 1 }}>
@@ -103,6 +121,12 @@ const CrossChannelEditor = ({
                         : 'No media'
                       }
                     </div>
+                    {tempChanges.media?.length > 0 && (
+                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>
+                        {tempChanges.media[0].name}
+                        {tempChanges.media.length > 1 && ` + ${tempChanges.media.length - 1} more`}
+                      </div>
+                    )}
                     <div style={{ fontSize: '12px', color: '#6c757d' }}>
                       Click to add or change media
                     </div>
@@ -117,38 +141,49 @@ const CrossChannelEditor = ({
   }
 
   const renderCaptionView = () => {
+    const handleCaptionChange = (channelId, value) => {
+      setTempChanges(prev => ({
+        ...prev,
+        channelCaptions: {
+          ...prev.channelCaptions,
+          [channelId]: value
+        },
+        captionsLinked: false // Editing makes captions separate
+      }))
+    }
+
+    const handleApplyToAll = (sourceChannelId) => {
+      const sourceCaption = tempChanges.channelCaptions?.[sourceChannelId] || ''
+      const newChannelCaptions = {}
+      
+      selectedChannels.forEach(channel => {
+        newChannelCaptions[channel.id] = sourceCaption
+      })
+      
+      setTempChanges(prev => ({
+        ...prev,
+        channelCaptions: newChannelCaptions,
+        captionsLinked: true // Apply to All reconnects to master
+      }))
+    }
+
+    const getChannelCaption = (channelId) => {
+      return tempChanges.channelCaptions?.[channelId] || tempChanges.caption || ''
+    }
+
     return (
       <div style={{
         flex: 1,
         padding: '20px',
         overflow: 'auto'
       }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
+        <h3 style={{ 
+          margin: '0 0 20px 0',
+          fontSize: '16px',
+          fontWeight: '600' 
         }}>
-          <h3 style={{ 
-            margin: '0',
-            fontSize: '16px',
-            fontWeight: '600' 
-          }}>
-            Captions by Channel
-          </h3>
-          
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}>
-            Apply to All
-          </button>
-        </div>
+          Captions by Channel
+        </h3>
         
         <div style={{
           display: 'flex',
@@ -193,7 +228,7 @@ const CrossChannelEditor = ({
                     fontSize: '12px',
                     color: '#6c757d'
                   }}>
-                    {(tempChanges.caption || '').length}/280 characters
+                    {getChannelCaption(channel.id).length}/280 characters
                   </div>
                 </div>
 
@@ -201,11 +236,8 @@ const CrossChannelEditor = ({
                 <div style={{ padding: '16px' }}>
                   <textarea
                     placeholder={`Write caption for ${platform?.name}...`}
-                    value={tempChanges.caption || ''}
-                    onChange={(e) => setTempChanges(prev => ({
-                      ...prev,
-                      caption: e.target.value
-                    }))}
+                    value={getChannelCaption(channel.id)}
+                    onChange={(e) => handleCaptionChange(channel.id, e.target.value)}
                     style={{
                       width: '100%',
                       minHeight: '80px',
@@ -214,9 +246,27 @@ const CrossChannelEditor = ({
                       borderRadius: '6px',
                       resize: 'vertical',
                       fontFamily: 'inherit',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      marginBottom: '12px'
                     }}
                   />
+                  
+                  {/* Individual Apply to All Button */}
+                  <button
+                    onClick={() => handleApplyToAll(channel.id)}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: 'transparent',
+                      color: '#6c757d',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '400'
+                    }}
+                  >
+                    Apply to All Channels
+                  </button>
                 </div>
               </div>
             )

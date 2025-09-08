@@ -46,10 +46,14 @@ const PostPreview = ({ platform, postType, content, isActive }) => {
         alignItems: 'center',
         justifyContent: 'center',
         color: '#999',
-        fontSize: '14px'
+        fontSize: '14px',
+        backgroundImage: media && media.length > 0 && media[0].url ? 
+          `url(${media[0].url})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
       }}>
         {media && media.length > 0 ? (
-          <div style={{ fontSize: '48px' }}>📷</div>
+          media[0].url ? null : <div style={{ fontSize: '48px' }}>📷</div>
         ) : (
           'No image uploaded'
         )}
@@ -149,9 +153,12 @@ const PostPreview = ({ platform, postType, content, isActive }) => {
           alignItems: 'center',
           justifyContent: 'center',
           color: '#999',
-          fontSize: '48px'
+          fontSize: '48px',
+          backgroundImage: media[0].url ? `url(${media[0].url})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}>
-          📷
+          {!media[0].url && '📷'}
         </div>
       )}
 
@@ -285,9 +292,12 @@ const PostPreview = ({ platform, postType, content, isActive }) => {
           justifyContent: 'center',
           color: '#999',
           fontSize: '48px',
-          marginBottom: '16px'
+          marginBottom: '16px',
+          backgroundImage: media[0].url ? `url(${media[0].url})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}>
-          📷
+          {!media[0].url && '📷'}
         </div>
       )}
 
