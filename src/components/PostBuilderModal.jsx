@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
+import ChannelBadge from './ChannelBadge'
+import ChannelMenu from './ChannelMenu'
 
 const PostBuilderModal = ({ onClose }) => {
   const [showPreview, setShowPreview] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [selectedChannels, setSelectedChannels] = useState([])
+  const [showChannelMenu, setShowChannelMenu] = useState(false)
   const modalRef = useRef(null)
   
   const modalWidth = showPreview ? 1120 : 720
@@ -67,6 +71,46 @@ const PostBuilderModal = ({ onClose }) => {
       }
     }
   }, [isDragging, dragOffset])
+
+  // Channel management functions
+  const handleChannelToggle = (channelId, postType) => {
+    setSelectedChannels(prev => {
+      const existingIndex = prev.findIndex(channel => channel.id === channelId)
+      
+      if (existingIndex >= 0) {
+        // Remove channel
+        return prev.filter((_, index) => index !== existingIndex)
+      } else {
+        // Add channel
+        return [...prev, { id: channelId, postType }]
+      }
+    })
+  }
+
+  const handlePostTypeSelect = (channelId, postType) => {
+    setSelectedChannels(prev => {
+      const existingIndex = prev.findIndex(channel => channel.id === channelId)
+      
+      if (existingIndex >= 0) {
+        // Update existing channel
+        const updated = [...prev]
+        updated[existingIndex] = { id: channelId, postType }
+        return updated
+      } else {
+        // Add new channel with post type
+        return [...prev, { id: channelId, postType }]
+      }
+    })
+  }
+
+  const handleChannelRemove = (channelId) => {
+    setSelectedChannels(prev => prev.filter(channel => channel.id !== channelId))
+  }
+
+  const handleChannelEdit = (channelId) => {
+    // TODO: Implement individual channel editing
+    console.log('Edit channel:', channelId)
+  }
 
   return (
     <>
@@ -254,48 +298,122 @@ const PostBuilderModal = ({ onClose }) => {
 
             {/* Social Channel Selector */}
             <div style={{
-              marginBottom: '20px'
+              marginBottom: '20px',
+              position: 'relative'
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '12px'
-              }}>
-                <button style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#f8f9fa',
+              {selectedChannels.length === 0 ? (
+                // Empty State
+                <div style={{
                   border: '1px solid #dee2e6',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}>
-                  Customize
-                </button>
-                
-                <button style={{
-                  width: '32px',
-                  height: '32px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontSize: '18px',
+                  borderRadius: '8px',
+                  padding: '16px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'space-between'
                 }}>
-                  +
-                </button>
-              </div>
-              
-              <div style={{
-                color: '#6c757d',
-                fontSize: '14px'
-              }}>
-                Select social media channels to post to
-              </div>
+                  <span style={{
+                    color: '#6c757d',
+                    fontSize: '14px'
+                  }}>
+                    Click the "+" to add your channels.
+                  </span>
+                  
+                  <button 
+                    onClick={() => setShowChannelMenu(!showChannelMenu)}
+                    style={{
+                      height: '40px',
+                      width: '40px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              ) : (
+                // Selected Channels State
+                <div style={{
+                  border: '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  padding: '12px'
+                }}>
+                  {/* Channel Badges */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    marginBottom: '12px'
+                  }}>
+                    {selectedChannels.map(channel => (
+                      <ChannelBadge
+                        key={channel.id}
+                        channelId={channel.id}
+                        postType={channel.postType}
+                        onEdit={handleChannelEdit}
+                        onRemove={handleChannelRemove}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Controls */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0',
+                    justifyContent: 'flex-end'
+                  }}>
+                    <button style={{
+                      height: '36px',
+                      padding: '8px 16px',
+                      backgroundColor: '#f8f9fa',
+                      color: '#495057',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px 0 0 6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      borderRight: 'none'
+                    }}>
+                      Customize
+                    </button>
+                    
+                    <button 
+                      onClick={() => setShowChannelMenu(!showChannelMenu)}
+                      style={{
+                        height: '36px',
+                        width: '36px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0 6px 6px 0',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Channel Selection Menu */}
+              {showChannelMenu && (
+                <ChannelMenu
+                  selectedChannels={selectedChannels}
+                  onChannelToggle={handleChannelToggle}
+                  onPostTypeSelect={handlePostTypeSelect}
+                  onClose={() => setShowChannelMenu(false)}
+                />
+              )}
             </div>
 
             {/* Sticky Footer */}
