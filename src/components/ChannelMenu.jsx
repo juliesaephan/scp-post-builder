@@ -1,15 +1,33 @@
 import { useState, useRef, useEffect } from 'react'
 import { platforms } from '../data/platforms'
 
-const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onClose }) => {
+const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onClose, buttonRef }) => {
   const [activeSubmenu, setActiveSubmenu] = useState(null)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0 })
   const menuRef = useRef(null)
   const submenuRef = useRef(null)
+
+  // Calculate menu position based on button position
+  useEffect(() => {
+    if (buttonRef?.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect()
+      const menuWidth = 280
+      const menuHeight = 400
+      
+      // Position menu above and aligned to right edge of button
+      setMenuPosition({
+        top: buttonRect.top - menuHeight - 8,
+        left: buttonRect.right - menuWidth
+      })
+    }
+  }, [buttonRef])
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (menuRef.current && !menuRef.current.contains(event.target) &&
+          submenuRef.current && !submenuRef.current.contains(event.target)) {
         onClose()
       }
     }
@@ -27,10 +45,24 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
     return channel?.postType || null
   }
 
-  const handleChannelClick = (platform) => {
+  const handleChannelClick = (platform, event) => {
     if (platform.types && platform.types.length > 0) {
       // Multi-type platform - open submenu
+      const isOpening = activeSubmenu !== platform.id
       setActiveSubmenu(activeSubmenu === platform.id ? null : platform.id)
+      
+      if (isOpening && event?.currentTarget) {
+        // Calculate submenu position
+        const itemRect = event.currentTarget.getBoundingClientRect()
+        const submenuWidth = 160
+        const submenuHeight = 120
+        
+        // Position submenu to the left of the menu to avoid horizontal scroll
+        setSubmenuPosition({
+          top: itemRect.top,
+          left: menuPosition.left - submenuWidth - 8
+        })
+      }
     } else {
       // Single-type platform - toggle directly
       onChannelToggle(platform.id, null)
@@ -60,7 +92,7 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
             backgroundColor: showSubmenu ? '#f8f9fa' : 'transparent',
             borderRadius: '4px'
           }}
-          onClick={() => handleChannelClick(platform)}
+          onClick={(e) => handleChannelClick(platform, e)}
         >
           <input
             type="checkbox"
@@ -78,29 +110,52 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
             }}
           />
           
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '6px',
-            backgroundColor: platform.color,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+          {/* Profile Picture with Social Icon Badge */}
+          <div style={{ 
+            position: 'relative', 
             marginRight: '12px',
-            fontSize: '16px'
+            width: '32px',
+            height: '32px'
           }}>
-            {platform.icon}
+            {/* Mock Profile Picture */}
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              border: '2px solid #e1e5e9'
+            }}>
+              🧁
+            </div>
+            
+            {/* Social Platform Badge */}
+            <div style={{
+              position: 'absolute',
+              bottom: '-2px',
+              right: '-2px',
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              backgroundColor: platform.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '8px',
+              border: '2px solid white',
+              boxSizing: 'border-box'
+            }}>
+              {platform.icon}
+            </div>
           </div>
           
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: '500', fontSize: '14px' }}>
               {platform.name}
             </div>
-            {isConnected && (
-              <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                {platform.account}
-              </div>
-            )}
             {selected && selectedType && (
               <div style={{ fontSize: '12px', color: '#6c757d' }}>
                 {selectedType}
@@ -125,15 +180,15 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
           <div
             ref={submenuRef}
             style={{
-              position: 'absolute',
-              left: '100%',
-              top: '0',
+              position: 'fixed',
+              top: submenuPosition.top,
+              left: submenuPosition.left,
               width: '160px',
               backgroundColor: 'white',
               border: '1px solid #e1e5e9',
               borderRadius: '8px',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              zIndex: 1001,
+              zIndex: 10000,
               padding: '8px'
             }}
           >
@@ -179,18 +234,17 @@ const ChannelMenu = ({ selectedChannels, onChannelToggle, onPostTypeSelect, onCl
     <div
       ref={menuRef}
       style={{
-        position: 'absolute',
-        top: '-8px',
-        right: '0',
+        position: 'fixed',
+        top: menuPosition.top,
+        left: menuPosition.left,
         width: '280px',
         maxHeight: '400px',
         backgroundColor: 'white',
         border: '1px solid #e1e5e9',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        zIndex: 1000,
-        overflow: 'auto',
-        transform: 'translateY(-100%)'
+        zIndex: 9999,
+        overflow: 'auto'
       }}
     >
       {/* Connected Channels Section */}

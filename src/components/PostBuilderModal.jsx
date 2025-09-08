@@ -9,6 +9,7 @@ const PostBuilderModal = ({ onClose }) => {
   const [selectedChannels, setSelectedChannels] = useState([])
   const [showChannelMenu, setShowChannelMenu] = useState(false)
   const modalRef = useRef(null)
+  const addButtonRef = useRef(null)
   
   const modalWidth = showPreview ? 1120 : 720
   const modalHeight = 550
@@ -319,6 +320,7 @@ const PostBuilderModal = ({ onClose }) => {
                   </span>
                   
                   <button 
+                    ref={addButtonRef}
                     onClick={() => setShowChannelMenu(!showChannelMenu)}
                     style={{
                       height: '40px',
@@ -384,6 +386,7 @@ const PostBuilderModal = ({ onClose }) => {
                     </button>
                     
                     <button 
+                      ref={addButtonRef}
                       onClick={() => setShowChannelMenu(!showChannelMenu)}
                       style={{
                         height: '36px',
@@ -412,6 +415,7 @@ const PostBuilderModal = ({ onClose }) => {
                   onChannelToggle={handleChannelToggle}
                   onPostTypeSelect={handlePostTypeSelect}
                   onClose={() => setShowChannelMenu(false)}
+                  buttonRef={addButtonRef}
                 />
               )}
             </div>
