@@ -5,6 +5,8 @@ import PostPreview from './PostPreview'
 const PreviewCarousel = ({ selectedChannels, caption, media }) => {
   const [activePreviewIndex, setActivePreviewIndex] = useState(0)
   const [previewData, setPreviewData] = useState([])
+  const [extendedData, setExtendedData] = useState([])
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   // Generate preview data when channels or content changes
   useEffect(() => {
@@ -23,6 +25,18 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
     })
     setPreviewData(data)
     
+    // Create extended data for infinite loop effect
+    if (data.length > 1) {
+      const extended = [
+        data[data.length - 1], // Last item at beginning
+        ...data,
+        data[0] // First item at end
+      ]
+      setExtendedData(extended)
+    } else {
+      setExtendedData(data)
+    }
+    
     // Reset active index if it's out of bounds
     if (activePreviewIndex >= data.length && data.length > 0) {
       setActivePreviewIndex(0)
@@ -33,16 +47,38 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
     setActivePreviewIndex(index)
   }
 
+  const handlePreviewClick = (index) => {
+    if (index !== activePreviewIndex) {
+      setActivePreviewIndex(index)
+    }
+  }
+
   const handlePrevious = () => {
-    setActivePreviewIndex(prev => 
-      prev > 0 ? prev - 1 : previewData.length - 1
-    )
+    if (previewData.length <= 1) return
+    
+    setIsTransitioning(true)
+    if (activePreviewIndex === 0) {
+      // Going from first to last - use extended data for smooth transition
+      setActivePreviewIndex(previewData.length - 1)
+    } else {
+      setActivePreviewIndex(activePreviewIndex - 1)
+    }
+    
+    setTimeout(() => setIsTransitioning(false), 300)
   }
 
   const handleNext = () => {
-    setActivePreviewIndex(prev => 
-      prev < previewData.length - 1 ? prev + 1 : 0
-    )
+    if (previewData.length <= 1) return
+    
+    setIsTransitioning(true)
+    if (activePreviewIndex === previewData.length - 1) {
+      // Going from last to first - use extended data for smooth transition
+      setActivePreviewIndex(0)
+    } else {
+      setActivePreviewIndex(activePreviewIndex + 1)
+    }
+    
+    setTimeout(() => setIsTransitioning(false), 300)
   }
 
   if (selectedChannels.length === 0) {
@@ -150,39 +186,113 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
         flex: 1,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
         position: 'relative'
       }}>
-        <div
-          style={{
-            display: 'flex',
-            width: `${previewData.length * 100}%`,
+        {previewData.length === 1 ? (
+          // Single preview - center it
+          <div style={{
+            width: '400px',
             height: '100%',
-            transform: `translateX(-${(activePreviewIndex * 100) / previewData.length}%)`,
-            transition: 'transform 0.3s ease'
-          }}
-        >
-          {previewData.map((preview, index) => (
-            <div
-              key={preview.id}
-              style={{
-                width: `${100 / previewData.length}%`,
-                height: '100%',
-                opacity: index === activePreviewIndex ? 1 : 0.3,
-                transition: 'opacity 0.3s ease',
-                padding: '16px',
-                boxSizing: 'border-box'
-              }}
-            >
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <PostPreview
+              platform={previewData[0].platform}
+              postType={previewData[0].postType}
+              content={previewData[0].content}
+              isActive={true}
+            />
+          </div>
+        ) : (
+          // Multiple previews - show 3 at a time (center + sides)
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            position: 'relative'
+          }}>
+            {/* Previous Preview */}
+            {previewData.length > 1 && (
+              <div
+                onClick={() => handlePreviewClick(activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1)}
+                style={{
+                  width: '300px',
+                  height: '80%',
+                  opacity: 0.4,
+                  transform: 'scale(0.85)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <PostPreview
+                  platform={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].platform}
+                  postType={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].postType}
+                  content={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].content}
+                  isActive={false}
+                />
+              </div>
+            )}
+
+            {/* Active Preview */}
+            <div style={{
+              width: '400px',
+              height: '90%',
+              opacity: 1,
+              transform: 'scale(1)',
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              borderRadius: '12px',
+              backgroundColor: 'transparent',
+              transition: 'all 0.3s ease'
+            }}>
               <PostPreview
-                platform={preview.platform}
-                postType={preview.postType}
-                content={preview.content}
-                isActive={index === activePreviewIndex}
+                platform={previewData[activePreviewIndex].platform}
+                postType={previewData[activePreviewIndex].postType}
+                content={previewData[activePreviewIndex].content}
+                isActive={true}
               />
             </div>
-          ))}
-        </div>
+
+            {/* Next Preview */}
+            {previewData.length > 1 && (
+              <div
+                onClick={() => handlePreviewClick(activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1)}
+                style={{
+                  width: '300px',
+                  height: '80%',
+                  opacity: 0.4,
+                  transform: 'scale(0.85)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <PostPreview
+                  platform={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].platform}
+                  postType={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].postType}
+                  content={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].content}
+                  isActive={false}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
