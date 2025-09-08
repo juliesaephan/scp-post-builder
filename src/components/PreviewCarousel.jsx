@@ -217,80 +217,92 @@ const PreviewCarousel = ({ selectedChannels, caption, media }) => {
             position: 'relative'
           }}>
             {/* Previous Preview */}
-            {previewData.length > 1 && (
-              <div
-                onClick={() => handlePreviewClick(activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1)}
-                style={{
-                  width: '300px',
-                  height: '80%',
-                  opacity: 0.4,
-                  transform: 'scale(0.85)',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  zIndex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <PostPreview
-                  platform={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].platform}
-                  postType={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].postType}
-                  content={previewData[activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1].content}
-                  isActive={false}
-                />
-              </div>
-            )}
+            {previewData.length > 1 && (() => {
+              const prevIndex = activePreviewIndex === 0 ? previewData.length - 1 : activePreviewIndex - 1
+              const prevPreview = previewData[prevIndex]
+              
+              return prevPreview ? (
+                <div
+                  onClick={() => handlePreviewClick(prevIndex)}
+                  style={{
+                    width: '300px',
+                    height: '80%',
+                    opacity: 0.4,
+                    transform: 'scale(0.85)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <PostPreview
+                    platform={prevPreview.platform}
+                    postType={prevPreview.postType}
+                    content={prevPreview.content}
+                    isActive={false}
+                  />
+                </div>
+              ) : null
+            })()}
 
             {/* Active Preview */}
-            <div style={{
-              width: '400px',
-              height: '90%',
-              opacity: 1,
-              transform: 'scale(1)',
-              zIndex: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 20px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-              borderRadius: '12px',
-              backgroundColor: 'transparent',
-              transition: 'all 0.3s ease'
-            }}>
-              <PostPreview
-                platform={previewData[activePreviewIndex].platform}
-                postType={previewData[activePreviewIndex].postType}
-                content={previewData[activePreviewIndex].content}
-                isActive={true}
-              />
-            </div>
-
-            {/* Next Preview */}
-            {previewData.length > 1 && (
-              <div
-                onClick={() => handlePreviewClick(activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1)}
-                style={{
-                  width: '300px',
-                  height: '80%',
-                  opacity: 0.4,
-                  transform: 'scale(0.85)',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  zIndex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
+            {previewData[activePreviewIndex] && (
+              <div style={{
+                width: '400px',
+                height: '90%',
+                opacity: 1,
+                transform: 'scale(1)',
+                zIndex: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 20px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                backgroundColor: 'transparent',
+                transition: 'all 0.3s ease'
+              }}>
                 <PostPreview
-                  platform={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].platform}
-                  postType={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].postType}
-                  content={previewData[activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1].content}
-                  isActive={false}
+                  platform={previewData[activePreviewIndex].platform}
+                  postType={previewData[activePreviewIndex].postType}
+                  content={previewData[activePreviewIndex].content}
+                  isActive={true}
                 />
               </div>
             )}
+
+            {/* Next Preview */}
+            {previewData.length > 1 && (() => {
+              const nextIndex = activePreviewIndex === previewData.length - 1 ? 0 : activePreviewIndex + 1
+              const nextPreview = previewData[nextIndex]
+              
+              return nextPreview ? (
+                <div
+                  onClick={() => handlePreviewClick(nextIndex)}
+                  style={{
+                    width: '300px',
+                    height: '80%',
+                    opacity: 0.4,
+                    transform: 'scale(0.85)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <PostPreview
+                    platform={nextPreview.platform}
+                    postType={nextPreview.postType}
+                    content={nextPreview.content}
+                    isActive={false}
+                  />
+                </div>
+              ) : null
+            })()}
           </div>
         )}
       </div>
