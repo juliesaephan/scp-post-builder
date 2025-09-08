@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ChannelBadge from './ChannelBadge'
 import ChannelMenu from './ChannelMenu'
 import PreviewCarousel from './PreviewCarousel'
+import CrossChannelEditor from './CrossChannelEditor'
 
 const PostBuilderModal = ({ onClose }) => {
   const [showPreview, setShowPreview] = useState(true)
@@ -11,6 +12,9 @@ const PostBuilderModal = ({ onClose }) => {
   const [showChannelMenu, setShowChannelMenu] = useState(false)
   const [caption, setCaption] = useState('')
   const [media, setMedia] = useState([])
+  const [crossChannelMode, setCrossChannelMode] = useState(false)
+  const [activeTab, setActiveTab] = useState('media') // 'media', 'caption', 'date'
+  const [tempChanges, setTempChanges] = useState({}) // Store temporary changes before update
   const modalRef = useRef(null)
   const addButtonRef = useRef(null)
   
@@ -125,6 +129,32 @@ const PostBuilderModal = ({ onClose }) => {
 
   const handleCaptionChange = (e) => {
     setCaption(e.target.value)
+  }
+
+  const handleCustomizeClick = () => {
+    setCrossChannelMode(true)
+    setActiveTab('media')
+    // Initialize temp changes with current state
+    setTempChanges({
+      caption: caption,
+      media: media,
+      channels: selectedChannels
+    })
+  }
+
+  const handleCancelCrossChannel = () => {
+    setCrossChannelMode(false)
+    setTempChanges({})
+  }
+
+  const handleUpdateCrossChannel = () => {
+    // Apply temp changes to actual state
+    if (tempChanges.caption !== undefined) setCaption(tempChanges.caption)
+    if (tempChanges.media !== undefined) setMedia(tempChanges.media)
+    if (tempChanges.channels !== undefined) setSelectedChannels(tempChanges.channels)
+    
+    setCrossChannelMode(false)
+    setTempChanges({})
   }
 
   return (
@@ -260,237 +290,256 @@ const PostBuilderModal = ({ onClose }) => {
           {/* Left Panel */}
           <div style={{
             width: showPreview ? '60%' : '100%',
-            padding: '20px',
             borderRight: showPreview ? '1px solid #e1e5e9' : 'none',
             display: 'flex',
             flexDirection: 'column',
             position: 'relative'
           }}>
-            {/* Media Uploader + Caption Editor */}
-            <div style={{
-              display: 'flex',
-              gap: '16px',
-              marginBottom: '20px'
-            }}>
-              {/* Media Uploader */}
-              <div 
-                onClick={handleMediaUpload}
-                style={{
-                  flex: 1,
-                  border: '2px dashed #dee2e6',
-                  borderRadius: '8px',
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  backgroundColor: '#f8f9fa',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>
-                  {media.length > 0 ? '📷' : '📁'}
-                </div>
-                <div style={{ fontWeight: '500', marginBottom: '4px' }}>
-                  {media.length > 0 ? `${media.length} file(s) selected` : 'Upload Media'}
-                </div>
-                <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                  {media.length > 0 ? 'Click to change files' : 'Drag & drop or click to upload'}
-                </div>
-              </div>
-
-              {/* Caption Editor */}
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
-                <textarea 
-                  placeholder="Write your caption..."
-                  value={caption}
-                  onChange={handleCaptionChange}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '8px',
-                    resize: 'none',
-                    fontFamily: 'inherit',
-                    fontSize: '14px',
-                    minHeight: '120px'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Social Channel Selector */}
-            <div style={{
-              marginBottom: '20px',
-              position: 'relative'
-            }}>
-              {selectedChannels.length === 0 ? (
-                // Empty State
-                <div style={{
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <span style={{
-                    color: '#6c757d',
-                    fontSize: '14px'
-                  }}>
-                    Click the "+" to add your channels.
-                  </span>
-                  
-                  <button 
-                    ref={addButtonRef}
-                    onClick={() => setShowChannelMenu(!showChannelMenu)}
-                    style={{
-                      height: '40px',
-                      width: '40px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              ) : (
-                // Selected Channels State
-                <div style={{
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  padding: '12px'
-                }}>
-                  {/* Channel Badges */}
+            {crossChannelMode ? (
+              /* Cross-Channel Editing Mode */
+              <CrossChannelEditor
+                selectedChannels={selectedChannels}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                tempChanges={tempChanges}
+                setTempChanges={setTempChanges}
+                onCancel={handleCancelCrossChannel}
+                onUpdate={handleUpdateCrossChannel}
+              />
+            ) : (
+              /* Normal Post Creation Mode */
+              <>
+                <div style={{ padding: '20px', flex: 1 }}>
+                  {/* Media Uploader + Caption Editor */}
                   <div style={{
                     display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    marginBottom: '12px'
+                    gap: '16px',
+                    marginBottom: '20px'
                   }}>
-                    {selectedChannels.map(channel => (
-                      <ChannelBadge
-                        key={channel.id}
-                        channelId={channel.id}
-                        postType={channel.postType}
-                        onEdit={handleChannelEdit}
-                        onRemove={handleChannelRemove}
+                    {/* Media Uploader */}
+                    <div 
+                      onClick={handleMediaUpload}
+                      style={{
+                        flex: 1,
+                        border: '2px dashed #dee2e6',
+                        borderRadius: '8px',
+                        padding: '40px 20px',
+                        textAlign: 'center',
+                        backgroundColor: '#f8f9fa',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+                        {media.length > 0 ? '📷' : '📁'}
+                      </div>
+                      <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                        {media.length > 0 ? `${media.length} file(s) selected` : 'Upload Media'}
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                        {media.length > 0 ? 'Click to change files' : 'Drag & drop or click to upload'}
+                      </div>
+                    </div>
+
+                    {/* Caption Editor */}
+                    <div style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      <textarea 
+                        placeholder="Write your caption..."
+                        value={caption}
+                        onChange={handleCaptionChange}
+                        style={{
+                          flex: 1,
+                          padding: '12px',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '8px',
+                          resize: 'none',
+                          fontFamily: 'inherit',
+                          fontSize: '14px',
+                          minHeight: '120px'
+                        }}
                       />
-                    ))}
+                    </div>
                   </div>
-                  
-                  {/* Controls */}
+
+                  {/* Social Channel Selector */}
+                  <div style={{
+                    marginBottom: '20px',
+                    position: 'relative'
+                  }}>
+                    {selectedChannels.length === 0 ? (
+                      // Empty State
+                      <div style={{
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span style={{
+                          color: '#6c757d',
+                          fontSize: '14px'
+                        }}>
+                          Click the "+" to add your channels.
+                        </span>
+                        
+                        <button 
+                          ref={addButtonRef}
+                          onClick={() => setShowChannelMenu(!showChannelMenu)}
+                          style={{
+                            height: '40px',
+                            width: '40px',
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      // Selected Channels State
+                      <div style={{
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        padding: '12px'
+                      }}>
+                        {/* Channel Badges */}
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                          marginBottom: '12px'
+                        }}>
+                          {selectedChannels.map(channel => (
+                            <ChannelBadge
+                              key={channel.id}
+                              channelId={channel.id}
+                              postType={channel.postType}
+                              onEdit={handleChannelEdit}
+                              onRemove={handleChannelRemove}
+                            />
+                          ))}
+                        </div>
+                        
+                        {/* Controls */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0',
+                          justifyContent: 'flex-end'
+                        }}>
+                          <button 
+                            onClick={handleCustomizeClick}
+                            style={{
+                              height: '36px',
+                              padding: '8px 16px',
+                              backgroundColor: '#f8f9fa',
+                              color: '#495057',
+                              border: '1px solid #dee2e6',
+                              borderRadius: '6px 0 0 6px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              borderRight: 'none'
+                            }}
+                          >
+                            Customize
+                          </button>
+                          
+                          <button 
+                            ref={addButtonRef}
+                            onClick={() => setShowChannelMenu(!showChannelMenu)}
+                            style={{
+                              height: '36px',
+                              width: '36px',
+                              backgroundColor: '#007bff',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0 6px 6px 0',
+                              cursor: 'pointer',
+                              fontSize: '18px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Channel Selection Menu */}
+                    {showChannelMenu && (
+                      <ChannelMenu
+                        selectedChannels={selectedChannels}
+                        onChannelToggle={handleChannelToggle}
+                        onPostTypeSelect={handlePostTypeSelect}
+                        onClose={() => setShowChannelMenu(false)}
+                        buttonRef={addButtonRef}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Sticky Footer - Only show in normal mode */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  borderTop: '1px solid #e1e5e9'
+                }}>
+                  <button style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: '#dc3545'
+                  }}>
+                    🗑️
+                  </button>
+
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0',
-                    justifyContent: 'flex-end'
+                    gap: '12px'
                   }}>
                     <button style={{
-                      height: '36px',
-                      padding: '8px 16px',
+                      padding: '8px 12px',
                       backgroundColor: '#f8f9fa',
-                      color: '#495057',
                       border: '1px solid #dee2e6',
-                      borderRadius: '6px 0 0 6px',
+                      borderRadius: '6px',
                       cursor: 'pointer',
-                      fontSize: '14px',
-                      borderRight: 'none'
+                      fontSize: '14px'
                     }}>
-                      Customize
+                      📅 Select Date
                     </button>
-                    
-                    <button 
-                      ref={addButtonRef}
-                      onClick={() => setShowChannelMenu(!showChannelMenu)}
-                      style={{
-                        height: '36px',
-                        width: '36px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0 6px 6px 0',
-                        cursor: 'pointer',
-                        fontSize: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      +
+
+                    <button style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '500'
+                    }}>
+                      Save Post
                     </button>
                   </div>
                 </div>
-              )}
-
-              {/* Channel Selection Menu */}
-              {showChannelMenu && (
-                <ChannelMenu
-                  selectedChannels={selectedChannels}
-                  onChannelToggle={handleChannelToggle}
-                  onPostTypeSelect={handlePostTypeSelect}
-                  onClose={() => setShowChannelMenu(false)}
-                  buttonRef={addButtonRef}
-                />
-              )}
-            </div>
-
-            {/* Sticky Footer */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '16px 0',
-              borderTop: '1px solid #e1e5e9',
-              marginTop: 'auto'
-            }}>
-              <button style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '18px',
-                color: '#dc3545'
-              }}>
-                🗑️
-              </button>
-
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <button style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#f8f9fa',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}>
-                  📅 Select Date
-                </button>
-
-                <button style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}>
-                  Save Post
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           {/* Right Panel - Preview Carousel */}
